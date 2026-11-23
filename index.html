@@ -1,0 +1,346 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Nunito:wght@400;600;700;800&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+.playground {
+  font-family: 'Nunito', sans-serif;
+  background: #edf3e9;
+  color: #304c38;
+  padding: 18px;
+  border-radius: 20px;
+  min-height: 650px;
+}
+
+.play-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.play-header h2 {
+  margin: 0;
+  font-size: 23px;
+  color: #31583d;
+}
+
+.play-header p {
+  margin: 4px 0;
+  font-size: 12px;
+  color: #80947d;
+}
+
+.leaf {
+  font-size: 25px;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 7px;
+}
+
+.editor-actions button {
+  border: none;
+  padding: 9px 14px;
+  border-radius: 10px;
+  background: #416b4b;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.editor-actions button:hover {
+  background: #294b32;
+}
+
+.editor-actions .clear {
+  background: #dce8d8;
+  color: #416b4b;
+}
+
+.editor-layout {
+  display: flex;
+  height: 510px;
+  border: 1px solid #c9d9c5;
+  border-radius: 15px;
+  overflow: hidden;
+  background: white;
+}
+
+.editor-panel,
+.preview-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.panel-heading {
+  background: #dce9d7;
+  padding: 12px 15px;
+  font-weight: 800;
+  font-size: 13px;
+  color: #42634a;
+}
+
+.editor-area {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  background: #17251d;
+}
+
+.line-numbers {
+  padding: 15px 9px;
+  color: #718b78;
+  background: #1b2b21;
+  text-align: right;
+  font: 13px/1.7 'DM Mono', monospace;
+  overflow: hidden;
+  user-select: none;
+  min-width: 38px;
+}
+
+#htmlCode {
+  flex: 1;
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 15px;
+  color: #c5e6c5;
+  background: #17251d;
+  font: 13px/1.7 'DM Mono', monospace;
+  white-space: pre;
+  overflow: auto;
+  tab-size: 2;
+}
+
+.divider {
+  width: 6px;
+  background: #c5d8bd;
+  cursor: col-resize;
+  flex-shrink: 0;
+}
+
+.divider:hover {
+  background: #709a72;
+}
+
+#preview {
+  border: none;
+  background: white;
+  flex: 1;
+  width: 100%;
+}
+
+.status {
+  padding: 9px 13px;
+  background: #e2eddf;
+  font-size: 11px;
+  color: #63816a;
+}
+
+@media(max-width:600px) {
+  .editor-layout {
+    flex-direction: column;
+    height: 750px;
+  }
+
+  .divider {
+    width: 100%;
+    height: 6px;
+    cursor: row-resize;
+  }
+
+  .playground {
+    padding: 10px;
+  }
+}
+</style>
+
+<div class="playground">
+
+  <div class="play-header">
+    <div>
+      <h2>🌿 Green Code Studio</h2>
+      <p>✿ Write · Run · Create something beautiful</p>
+    </div>
+    <span class="leaf">🍃</span>
+  </div>
+
+  <div class="editor-actions">
+    <button onclick="runCode()">▶ Run</button>
+    <button class="clear" onclick="clearCode()">Clear</button>
+    <button class="clear" onclick="resetCode()">↺ Reset</button>
+  </div>
+
+  <br>
+
+  <div class="editor-layout" id="layout">
+
+    <div class="editor-panel" id="editorPanel">
+      <div class="panel-heading">
+        ◈ HTML EDITOR
+      </div>
+
+      <div class="editor-area">
+        <div class="line-numbers" id="lines">1</div>
+
+        <textarea id="htmlCode" spellcheck="false"
+          oninput="updateLines()"
+          onscroll="syncLines()"
+          onkeydown="handleTab(event)"></textarea>
+      </div>
+
+      <div class="status">● Ready to code</div>
+    </div>
+
+    <div class="divider" id="divider"></div>
+
+    <div class="preview-panel">
+      <div class="panel-heading">
+        ◉ LIVE PREVIEW
+      </div>
+
+      <iframe id="preview"
+        sandbox="allow-scripts allow-forms allow-modals">
+      </iframe>
+
+      <div class="status">✿ Your creation appears here</div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const editor = document.getElementById("htmlCode");
+const preview = document.getElementById("preview");
+const lines = document.getElementById("lines");
+
+const starterCode = `<!DOCTYPE html>
+<html>
+<head>
+  <title>My Website</title>
+  <style>
+    body {
+      background: #e8f1e5;
+      font-family: Arial;
+      text-align: center;
+      padding: 40px;
+      color: #355b3d;
+    }
+
+    h1 {
+      color: #47764e;
+    }
+
+    button {
+      background: #47764e;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Hello, World! 🌿</h1>
+  <p>Welcome to my little website.</p>
+  <button onclick="alert('Hello!')">
+    Click Me
+  </button>
+
+</body>
+</html>`;
+
+editor.value = starterCode;
+
+function runCode() {
+  preview.srcdoc = editor.value;
+}
+
+function clearCode() {
+  editor.value = "";
+  runCode();
+  updateLines();
+}
+
+function resetCode() {
+  editor.value = starterCode;
+  runCode();
+  updateLines();
+}
+
+function updateLines() {
+  const count = editor.value.split("\n").length;
+  lines.innerHTML = Array.from(
+    {length: count},
+    (_, i) => i + 1
+  ).join("<br>");
+}
+
+function syncLines() {
+  lines.scrollTop = editor.scrollTop;
+}
+
+function handleTab(e) {
+  if (e.key === "Tab") {
+    e.preventDefault();
+
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+
+    editor.value =
+      editor.value.substring(0, start) +
+      "  " +
+      editor.value.substring(end);
+
+    editor.selectionStart =
+    editor.selectionEnd = start + 2;
+
+    updateLines();
+  }
+}
+
+// Draggable divider
+const divider = document.getElementById("divider");
+const editorPanel = document.getElementById("editorPanel");
+const layout = document.getElementById("layout");
+
+let dragging = false;
+
+divider.addEventListener("pointerdown", () => {
+  dragging = true;
+  divider.setPointerCapture(event.pointerId);
+});
+
+divider.addEventListener("pointermove", (e) => {
+  if (!dragging) return;
+
+  if (window.innerWidth > 600) {
+    const rect = layout.getBoundingClientRect();
+    let width = e.clientX - rect.left;
+
+    width = Math.max(100, Math.min(width, rect.width - 100));
+
+    editorPanel.style.flex = "none";
+    editorPanel.style.width = width + "px";
+  }
+});
+
+divider.addEventListener("pointerup", () => {
+  dragging = false;
+});
+
+runCode();
+updateLines();
+</script>
